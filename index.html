@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skin Upgrader</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top, #283b70, #101322 60%);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.game {
+    width: 1000px;
+    max-width: 95%;
+    background: rgba(15, 18, 35, 0.96);
+    border: 2px solid #30395e;
+    border-radius: 25px;
+    padding: 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+}
+
+h1 {
+    text-align: center;
+    font-size: 42px;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #9da9cf;
+    margin-bottom: 25px;
+}
+
+.money {
+    text-align: center;
+    font-size: 30px;
+    margin-bottom: 25px;
+}
+
+.skins {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.skin {
+    background: #1b2038;
+    border: 2px solid #30385c;
+    border-radius: 18px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: .2s;
+}
+
+.skin:hover {
+    transform: translateY(-5px);
+    border-color: #7286e8;
+}
+
+.skin.selected {
+    border-color: #8c9cff;
+    box-shadow: 0 0 20px rgba(110,130,255,.3);
+}
+
+.skin-image {
+    height: 150px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 95px;
+    margin-bottom: 10px;
+}
+
+.skin-name {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.level {
+    color: #9fa9c9;
+    margin-top: 5px;
+}
+
+.upgrader {
+    margin-top: 25px;
+    background: #191e33;
+    border-radius: 20px;
+    padding: 25px;
+    text-align: center;
+}
+
+.preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 35px;
+    margin: 20px 0;
+}
+
+.preview-item {
+    width: 180px;
+    padding: 20px;
+    border-radius: 15px;
+    background: #111527;
+}
+
+.preview-item div {
+    font-size: 70px;
+    margin-bottom: 10px;
+}
+
+.arrow {
+    font-size: 40px;
+}
+
+.upgrade-button {
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(90deg, #596cf0, #8b5cf6);
+    color: white;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.upgrade-button:hover {
+    filter: brightness(1.15);
+}
+
+.upgrade-button:disabled {
+    background: #44485b;
+    cursor: not-allowed;
+}
+
+.reset {
+    margin-top: 15px;
+    background: transparent;
+    color: #737b9e;
+    border: none;
+    cursor: pointer;
+}
+
+.notification {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    background: #252b47;
+    border: 1px solid #5364a5;
+    padding: 15px 20px;
+    border-radius: 12px;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: .3s;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+@media(max-width: 700px) {
+    .skins {
+        grid-template-columns: 1fr;
+    }
+
+    .preview {
+        gap: 10px;
+    }
+
+    .preview-item {
+        width: 140px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <h1>⚡ Skin Upgrader</h1>
+
+    <p class="subtitle">
+        Выбирай скин и улучшай его до легендарного
+    </p>
+
+    <div class="money">
+        💰 <span id="money">1000</span>
+    </div>
+
+    <div class="skins" id="skins"></div>
+
+    <div class="upgrader">
+
+        <h2 id="selectedName">Выбери скин</h2>
+
+        <div class="preview">
+
+            <div class="preview-item">
+                <div id="currentSkin">❓</div>
+                <span>Текущий</span>
+            </div>
+
+            <div class="arrow">
+                ➜
+            </div>
+
+            <div class="preview-item">
+                <div id="nextSkin">❓</div>
+                <span>Следующий</span>
+            </div>
+
+        </div>
+
+        <p id="upgradeInfo">
+            Выбери скин для улучшения
+        </p>
+
+        <br>
+
+        <button
+            class="upgrade-button"
+            id="upgradeButton"
+            onclick="upgrade()"
+            disabled>
+            Улучшить
+        </button>
+
+    </div>
+
+    <div style="text-align:center">
+        <button class="reset" onclick="resetGame()">
+            Сбросить прогресс
+        </button>
+    </div>
+
+</div>
+
+<div class="notification" id="notification">
+    Скин улучшен!
+</div>
+
+
+<script>
+
+const skins = [
+
+    {
+        name: "Деревянный",
+        levels: ["🪵", "🪓", "🛡️", "⚔️", "🔥"],
+        prices: [100, 250, 500, 1000]
+    },
+
+    {
+        name: "Воин",
+        levels: ["🧑", "🗡️", "⚔️", "🛡️", "👑"],
+        prices: [150, 350, 700, 1500]
+    },
+
+    {
+        name: "Маг",
+        levels: ["🧙", "🔮", "✨", "⚡", "🌌"],
+        prices: [200, 450, 900, 2000]
+    },
+
+    {
+        name: "Монстр",
+        levels: ["👾", "👹", "👺", "🐲", "🐉"],
+        prices: [300, 600, 1200, 2500]
+    },
+
+    {
+        name: "Космос",
+        levels: ["🚀", "🌙", "🪐", "☄️", "🌌"],
+        prices: [500, 1000, 2000, 5000]
+    },
+
+    {
+        name: "Легенда",
+        levels: ["🥷", "🔥", "💎", "👑", "🏆"],
+        prices: [750, 1500, 3000, 7500]
+    }
+
+];
+
+let money = Number(localStorage.getItem("money")) || 1000;
+
+let levels =
+    JSON.parse(localStorage.getItem("skinLevels"))
+    ||
+    [0, 0, 0, 0, 0, 0];
+
+let selected = 0;
+
+
+// Создание карточек скинов
+
+function renderSkins() {
+
+    const container = document.getElementById("skins");
+
+    container.innerHTML = "";
+
+    skins.forEach((skin, index) => {
+
+        const div = document.createElement("div");
+
+        div.className =
+            "skin " +
+            (selected === index ? "selected" : "");
+
+        div.onclick = () => selectSkin(index);
+
+        div.innerHTML = `
+
+            <div class="skin-image">
+                ${skin.levels[levels[index]]}
+            </div>
+
+            <div class="skin-name">
+                ${skin.name}
+            </div>
+
+            <div class="level">
+                Уровень ${levels[index] + 1}/5
+            </div>
+
+        `;
+
+        container.appendChild(div);
+
+    });
+
+}
+
+
+// Выбор скина
+
+function selectSkin(index) {
+
+    selected = index;
+
+    update();
+
+}
+
+
+// Обновление интерфейса
+
+function update() {
+
+    renderSkins();
+
+    document.getElementById("money").textContent =
+        money;
+
+    const skin = skins[selected];
+
+    const level = levels[selected];
+
+    document.getElementById("selectedName").textContent =
+        skin.name;
+
+    document.getElementById("currentSkin").textContent =
+        skin.levels[level];
+
+    const nextSkin =
+        document.getElementById("nextSkin");
+
+    const button =
+        document.getElementById("upgradeButton");
+
+    const info =
+        document.getElementById("upgradeInfo");
+
+
+    // Максимальный уровень
+
+    if (level >= skin.levels.length - 1) {
+
+        nextSkin.textContent =
+            "👑";
+
+        info.textContent =
+            "✨ Максимальный уровень!";
+
+        button.textContent =
+            "МАКСИМАЛЬНЫЙ УРОВЕНЬ";
+
+        button.disabled = true;
+
+        return;
+    }
+
+
+    const price =
+        skin.prices[level];
+
+    nextSkin.textContent =
+        skin.levels[level + 1];
+
+    info.textContent =
+        `Следующий уровень стоит ${price} 💰`;
+
+    button.textContent =
+        `УЛУЧШИТЬ — ${price} 💰`;
+
+    button.disabled =
+        money < price;
+
+}
+
+
+// Улучшение
+
+function upgrade() {
+
+    const skin = skins[selected];
+
+    const level = levels[selected];
+
+    if (level >= skin.levels.length - 1) {
+        return;
+    }
+
+    const price =
+        skin.prices[level];
+
+    if (money < price) {
+
+        showNotification(
+            "❌ Недостаточно монет!"
+        );
+
+        return;
+    }
+
+
+    money -= price;
+
+    levels[selected]++;
+
+
+    localStorage.setItem(
+        "money",
+        money
+    );
+
+    localStorage.setItem(
+        "skinLevels",
+        JSON.stringify(levels)
+    );
+
+
+    showNotification(
+        "🎉 Скин успешно улучшен!"
+    );
+
+    update();
+
+}
+
+
+// Уведомление
+
+function showNotification(text) {
+
+    const notification =
+        document.getElementById("notification");
+
+    notification.textContent = text;
+
+    notification.classList.add("show");
+
+    setTimeout(() => {
+
+        notification.classList.remove("show");
+
+    }, 1800);
+
+}
+
+
+// Сброс
+
+function resetGame() {
+
+    if (!confirm("Сбросить весь прогресс?")) {
+        return;
+    }
+
+    money = 1000;
+
+    levels =
+        [0, 0, 0, 0, 0, 0];
+
+    localStorage.removeItem("money");
+
+    localStorage.removeItem("skinLevels");
+
+    update();
+
+}
+
+
+// Запуск
+
+update();
+
+</script>
+
+</body>
+</html>
